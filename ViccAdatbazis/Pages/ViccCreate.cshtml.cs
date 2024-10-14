@@ -10,11 +10,11 @@ using ViccAdatbazis.Models;
 
 namespace ViccAdatbazis.Pages
 {
-    public class ViccCreateModel : PageModel
+    public class UjViccModel : PageModel
     {
         private readonly ViccAdatbazis.Data.ViccDbContext _context;
 
-        public ViccCreateModel(ViccAdatbazis.Data.ViccDbContext context)
+        public UjViccModel(ViccAdatbazis.Data.ViccDbContext context)
         {
             _context = context;
         }

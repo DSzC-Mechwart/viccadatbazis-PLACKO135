@@ -10,148 +10,116 @@ using ViccAdatbazis.Models;
 
 namespace ViccAdatbazis.Controllers
 {
-    public class ViccsController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ViccController : ControllerBase
     {
+        //Adatbázis kapcsolat
         private readonly ViccDbContext _context;
-
-        public ViccsController(ViccDbContext context)
+        public ViccController(ViccDbContext context)
         {
             _context = context;
         }
 
-        // GET: Viccs
-        public async Task<IActionResult> Index()
+        //Összes vicc lekérése async módon
+        [HttpGet]
+        public async Task<ActionResult<List<Vicc>>> GetViccek()
         {
-            return View(await _context.Viccek.ToListAsync());
+            return await _context.Viccek.Where(x => x.Aktiv == true).ToListAsync();
         }
 
-        // GET: Viccs/Details/5
-        public async Task<IActionResult> Details(int? id)
+        //Egy vicc lekérdezése
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Vicc>> GetVicc(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var vicc = await _context.Viccek
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (vicc == null)
-            {
-                return NotFound();
-            }
-
-            return View(vicc);
-        }
-
-        // GET: Viccs/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Viccs/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Tartalom,Feltolto,Tetszik,NemTetszik,Aktiv")] Vicc vicc)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(vicc);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(vicc);
-        }
-
-        // GET: Viccs/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var vicc = await _context.Viccek.FindAsync(id);
             if (vicc == null)
             {
                 return NotFound();
             }
-            return View(vicc);
+
+            return vicc;
         }
 
-        // POST: Viccs/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        //Új vicc hozzáadása 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Tartalom,Feltolto,Tetszik,NemTetszik,Aktiv")] Vicc vicc)
+        public async Task<ActionResult<Vicc>> PostVicc(Vicc vicc)
+        {
+            _context.Viccek.Add(vicc);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        //Vicc módosítása
+        [HttpPut("{id}")]
+        public async Task<ActionResult> PutVicc(int id, Vicc vicc)
         {
             if (id != vicc.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
+            _context.Entry(vicc).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(vicc);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ViccExists(vicc.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(vicc);
+            return Ok();
         }
 
-        // GET: Viccs/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
 
-            var vicc = await _context.Viccek
-                .FirstOrDefaultAsync(m => m.Id == id);
+        //Vicc törlése
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteVicc(int id)
+        {
+            var vicc = await _context.Viccek.FindAsync(id);
             if (vicc == null)
             {
                 return NotFound();
             }
-
-            return View(vicc);
-        }
-
-        // POST: Viccs/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var vicc = await _context.Viccek.FindAsync(id);
-            if (vicc != null)
+            else if (vicc.Aktiv == true)
+            {
+                vicc.Aktiv = false;
+                _context.Entry(vicc).State = EntityState.Modified;
+            }
+            else
             {
                 _context.Viccek.Remove(vicc);
             }
-
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return Ok();
         }
 
-        private bool ViccExists(int id)
+        // Vicc likeolása
+
+        [HttpPatch("{id}/like")]
+        public async Task<ActionResult> LikeVicc(int id)
         {
-            return _context.Viccek.Any(e => e.Id == id);
+            var joke = await _context.Viccek.FindAsync(id);
+            if (joke == null)
+            {
+                return NotFound();
+            }
+            joke.Tetszik++;
+            _context.Entry(joke).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        //Vicc dislikeolása
+        [HttpPatch("{id}/dislike")]
+        public async Task<ActionResult> DislikeVicc(int id)
+        {
+            var joke = await _context.Viccek.FindAsync(id);
+            if (joke == null)
+            {
+                return NotFound();
+            }
+
+            joke.NemTetszik++;
+            _context.Entry(joke).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }

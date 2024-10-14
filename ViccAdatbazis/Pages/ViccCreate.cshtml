@@ -1,11 +1,11 @@
 ﻿@page
-@model ViccAdatbazis.Pages.ViccCreateModel
+@model ViccAdatbazis.Pages.UjViccModel
 
 @{
-    ViewData["Title"] = "ViccCreate";
+    ViewData["Title"] = "UjVicc";
 }
 
-<h1>ViccCreate</h1>
+<h1>UjVicc</h1>
 
 <h4>Vicc</h4>
 <hr />
@@ -35,5 +35,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
