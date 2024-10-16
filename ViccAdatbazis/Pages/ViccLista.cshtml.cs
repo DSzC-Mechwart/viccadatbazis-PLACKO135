@@ -10,16 +10,16 @@ using ViccAdatbazis.Models;
 
 namespace ViccAdatbazis.Pages
 {
-    public class ViccListaModel : PageModel
+    public class ViccekListajaModel : PageModel
     {
         private readonly ViccAdatbazis.Data.ViccDbContext _context;
 
-        public ViccListaModel(ViccAdatbazis.Data.ViccDbContext context)
+        public ViccekListajaModel(ViccAdatbazis.Data.ViccDbContext context)
         {
             _context = context;
         }
 
-        public IList<Vicc> Vicc { get;set; } = default!;
+        public IList<Vicc> Vicc { get; set; } = default!;
 
         public async Task OnGetAsync()
         {

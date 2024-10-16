@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Text.Json.Serialization;
 using ViccAdatbazis.Data;
 using ViccAdatbazis.Models;
 
@@ -16,13 +18,16 @@ namespace ViccAdatbazis.Controllers
     {
         //Adatbázis kapcsolat
         private readonly ViccDbContext _context;
+
         public ViccController(ViccDbContext context)
         {
             _context = context;
         }
 
-        //Összes vicc lekérése async módon
+        //Összes vicc lekérdezése
         [HttpGet]
+      
+        //Aszinkron módon
         public async Task<ActionResult<List<Vicc>>> GetViccek()
         {
             return await _context.Viccek.Where(x => x.Aktiv == true).ToListAsync();
@@ -37,17 +42,20 @@ namespace ViccAdatbazis.Controllers
             {
                 return NotFound();
             }
-
             return vicc;
         }
 
-        //Új vicc hozzáadása 
+        //Vicc feltöltése
         [HttpPost]
         public async Task<ActionResult<Vicc>> PostVicc(Vicc vicc)
         {
             _context.Viccek.Add(vicc);
             await _context.SaveChangesAsync();
-            return Ok();
+
+   
+
+            //A válasz maga a vicc
+            return CreatedAtAction("GetVicc", new { id = vicc.Id }, vicc);
         }
 
         //Vicc módosítása
@@ -61,9 +69,8 @@ namespace ViccAdatbazis.Controllers
             _context.Entry(vicc).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return NoContent();
         }
-
 
         //Vicc törlése
         [HttpDelete("{id}")]
@@ -74,7 +81,7 @@ namespace ViccAdatbazis.Controllers
             {
                 return NotFound();
             }
-            else if (vicc.Aktiv == true)
+            if (vicc.Aktiv == true)
             {
                 vicc.Aktiv = false;
                 _context.Entry(vicc).State = EntityState.Modified;
@@ -84,42 +91,41 @@ namespace ViccAdatbazis.Controllers
                 _context.Viccek.Remove(vicc);
             }
             await _context.SaveChangesAsync();
-
-            return Ok();
+            return NoContent();
         }
 
-        // Vicc likeolása
-
-        [HttpPatch("{id}/like")]
-        public async Task<ActionResult> LikeVicc(int id)
+        //Lájkolás
+        [Route("{id}/like")]
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<string>> Tetszik(int id)
         {
-            var joke = await _context.Viccek.FindAsync(id);
-            if (joke == null)
-            {
-                return NotFound();
-            }
-            joke.Tetszik++;
-            _context.Entry(joke).State = EntityState.Modified;
+            var vicc = _context.Viccek.Find(id);
+            if (vicc == null) { return NotFound(); }
+            vicc.Tetszik++;
+            _context.Entry(vicc).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-
-            return Ok();
+            var valasz = new
+            {
+                tdb = vicc.Tetszik
+            };
+            return Ok(JsonSerializer.Serialize(valasz));
         }
 
-        //Vicc dislikeolása
-        [HttpPatch("{id}/dislike")]
-        public async Task<ActionResult> DislikeVicc(int id)
+        //DisLike
+        [Route("{id}/dislike")]
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<string>> NemTetszik(int id)
         {
-            var joke = await _context.Viccek.FindAsync(id);
-            if (joke == null)
-            {
-                return NotFound();
-            }
-
-            joke.NemTetszik++;
-            _context.Entry(joke).State = EntityState.Modified;
+            var vicc = _context.Viccek.Find(id);
+            if (vicc == null) { return NotFound(); }
+            vicc.NemTetszik++;
+            _context.Entry(vicc).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-
-            return Ok();
+            var valasz = new
+            {
+                tdb = vicc.NemTetszik
+            };
+            return Ok(JsonSerializer.Serialize(valasz));
         }
     }
 }
